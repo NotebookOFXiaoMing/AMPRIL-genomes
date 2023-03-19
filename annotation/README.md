@@ -2,8 +2,9 @@
 
 # workflow for protein-coding gene annotation 
 ## step 1: run pipeline for protein-coding gene annotation
-  
+  ```
   python ../scripts/evm.pasa.integrate.pipeline.py -f ./annotation.config
+  ```
   This script will do 
   
   1) protein sequence alignment using exonerate  
@@ -15,23 +16,30 @@
   The results will be included in the file evm.all.gff3
   
 ## step 2: repeat annotation
+```
   RepeatMasker -species arabidopsis -gff -dir ./ -pa 20 ../../reference/chr.all.v2.0.fasta
   
   perl ../../../scripts/repeat.classfied.gff3.pl ./chr.all.v2.0.fasta.out.gff ./chr.all.v2.0.fasta.out ./chr.all.v2.0.fasta.repeats.ann.gff3 repeat.ann.stats &
   
   egrep -v 'Low|Simple|RNA|other|Satellite' chr.all.v2.0.fasta.repeats.ann.gff3 |cut -f 1,4,5,9 >chr.all.v2.0.TE.bed
-
+```
 ## step 3: identify TE-related genes
+```
   perl ../../../scripts/remove.TErelated.genes.pl ../../EVM_PASA/evm.annotation.protein.fasta ../../EVM_PASA/evm.annotation.gene.fasta ../RepeatMasker/chr.all.v2.0.TE.bed ../../EVM_PASA/evm.all.gff3 ./ 
+  
+```
 
 ## step 4: non-coding gene annotation
+```
   cmscan --cpu 20 --tblout Rfam.scan.out ../../../data/Rfam/Rfam.cm ../chr.all.v2.0.split.fasta
   perl  ../../../scripts/noncoding.infernal.output.parser.pl ./Rfam.scan.out ./ >nohup.out & 
-
+```
 ## step 5: get the initial version
+```
    nohup python ./scripts/gene.id.update.py -i ./ -v 2.0 >log/gene.id.update.log &
-   
+```  
 ## step 6: evaluation
+```
   awk '{if ($3!="miRNA_primary_transcript" && $3!="pseudogenic_exon" && $3!="pseudogenic_transcript" && $3!="pseudogenic_tRNA" && $3!="transposon_fragment" && $3!="mRNA" && $3!="protein" && $3 !="CDS" && $3!="exon" && $3!="five_prime_UTR" && $3!="three_prime_UTR" && $3!="lnc_RNA") print}' Araport11_GFF3_genes_transposons.201606.gff |grep -v '^#' |cut -f 1,4,5,9 |grep -vP '\.\d+\;Parent' |grep -v  'ChrC|ChrM' >Araport11_gene.TE.chr1-5.bed &
 
 cd /AMPRILdenovo/annotation/Sha/evaluation
@@ -202,4 +210,4 @@ nohup python -u ../../../scripts/annotation.evaluate.find-mis.py -g ./groups.txt
  for k in {An-1,C24,Cvi,Eri}; do  
    python -u ./scripts/annotation.gene.ID.update.py -i  $k/evaluation/update/run2/updated.highConf.gff -n ./$k/version2/tmp/$k.genes.annotation.2.0.tmp.gff -o ./$k/version2 -v v2.0 -a $k -g $k/reference/chr.all.v2.0.fasta > $k/version2/updateID.log ;
  done 
-
+```
